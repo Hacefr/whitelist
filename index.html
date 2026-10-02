@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Whitelist Application</title>
+  <style>
+    :root {
+      --bg: #1c1c1c;
+      --card-bg: #242424;
+      --border: #3e3e3e;
+      --input-bg: #181818;
+      --text: #d4d4d4;
+      --text-muted: #888888;
+      --btn-bg: #e0e0e0;
+      --btn-text: #121212;
+      --btn-hover: #cccccc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      border-radius: 0 !important;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 28px;
+    }
+
+    .header {
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+    }
+
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #666666;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: 1px solid #ffffff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--btn-hover);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      display: none;
+      padding: 10px;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      border: 1px solid;
+    }
+
+    .alert.success {
+      display: block;
+      background: #1e261f;
+      border-color: #3b523f;
+      color: #9dbca2;
+    }
+
+    .alert.error {
+      display: block;
+      background: #2b1f1f;
+      border-color: #5c3939;
+      color: #caa0a0;
+    }
+
+    .spinner {
+      display: none;
+      width: 12px;
+      height: 12px;
+      background-color: var(--btn-text);
+      animation: rotate-square 0.8s infinite ease-in-out;
+    }
+
+    @keyframes rotate-square {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(180deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Whitelist Application</h1>
+      <p>Submit your details for review.</p>
+    </div>
+
+    <form id="whitelistForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="reason">Reason for joining</label>
+        <textarea id="reason" name="reason" placeholder="Enter reason..." required></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn">
+        <span class="spinner" id="btnSpinner"></span>
+        <span id="btnText">Submit</span>
+      </button>
+
+      <div id="statusAlert" class="alert"></div>
+    </form>
+  </div>
+
+  <script>
+    // ⚠️ WE WILL UPDATE THIS IN STEP 4 WITH YOUR RENDER URL
+    const BACKEND_URL = "https://YOUR-APP-NAME.onrender.com/api/apply";
+
+    const form = document.getElementById("whitelistForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const btnText = document.getElementById("btnText");
+    const btnSpinner = document.getElementById("btnSpinner");
+    const statusAlert = document.getElementById("statusAlert");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const reason = document.getElementById("reason").value.trim();
+
+      submitBtn.disabled = true;
+      btnSpinner.style.display = "inline-block";
+      btnText.textContent = "Processing...";
+      statusAlert.className = "alert";
+      statusAlert.textContent = "";
+
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, reason })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok) {
+          statusAlert.className = "alert success";
+          statusAlert.textContent = "Application submitted successfully.";
+          form.reset();
+        } else {
+          statusAlert.className = "alert error";
+          statusAlert.textContent = data.error || "Failed to submit application.";
+        }
+      } catch (err) {
+        statusAlert.className = "alert error";
+        statusAlert.textContent = "Error: Could not reach the server.";
+      } finally {
+        submitBtn.disabled = false;
+        btnSpinner.style.display = "none";
+        btnText.textContent = "Submit";
+      }
+    });
+  </script>
+</body>
+</html>
